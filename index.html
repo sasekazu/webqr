@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QRコード生成</title>
+  <title>QR Code Generator</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </head>
 <body>
-  <h1>QRコード生成</h1>
-  <textarea id="input" rows="4" cols="50" placeholder="文字列やURLを入力してください" autofocus></textarea>
+  <h1>QR Code Generator</h1>
+  <textarea id="input" rows="4" cols="50" placeholder="Enter text or a URL" autofocus></textarea>
   <div id="qr"></div>
 
 <script>
   const input = document.getElementById("input");
   const box = document.getElementById("qr");
-  // 日本語などを正しく扱うため UTF-8 でエンコードする
+  // Encode as UTF-8 so Japanese and other non-ASCII text works correctly
   qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
 
   input.addEventListener("input", () => {
@@ -22,12 +22,12 @@
     box.innerHTML = "";
     if (!text) return;
     try {
-      const qr = qrcode(0, "M"); // 0 = 文字数に合わせてサイズを自動選択
+      const qr = qrcode(0, "M"); // 0 = pick the size automatically based on text length
       qr.addData(text, "Byte");
       qr.make();
-      box.innerHTML = qr.createSvgTag(6, 24); // セルの大きさ, 余白
+      box.innerHTML = qr.createSvgTag(6, 24); // cell size, margin
     } catch (e) {
-      box.textContent = "文字列が長すぎてQRコードにできません";
+      box.textContent = "Text is too long to fit in a QR code";
     }
   });
 </script>
