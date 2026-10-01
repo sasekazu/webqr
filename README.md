@@ -9,10 +9,12 @@ A simple web page that generates a QR code instantly as you type.
 1. Open the URL above in your browser.
 2. Type any text or URL into the input box.
 3. The QR code appears below as you type.
+4. Use **Copy to clipboard** to copy the QR code as an image, or **Download PNG** to save it as `qrcode.png`.
 
 - Supports Japanese and other non-ASCII text (encoded as UTF-8).
 - Clearing the input box removes the QR code.
 - If the text is too long to fit in a QR code, a message is shown instead.
+- Copying requires the page to be opened over `https://` or `localhost`; when `index.html` is opened directly as a file, use Download instead.
 
 ## How it works
 

@@ -9,26 +9,76 @@
 <body>
   <h1>QR Code Generator</h1>
   <textarea id="input" rows="4" cols="50" placeholder="Enter text or a URL" autofocus></textarea>
-  <div id="qr"></div>
+  <div id="actions" hidden>
+    <button id="copy">Copy to clipboard</button>
+    <button id="download">Download PNG</button>
+    <span id="msg"></span>
+  </div>
+  <div id="qr"><canvas id="canvas" hidden></canvas></div>
+  <p id="error" hidden>Text is too long to fit in a QR code</p>
 
 <script>
   const input = document.getElementById("input");
-  const box = document.getElementById("qr");
+  const canvas = document.getElementById("canvas");
+  const actions = document.getElementById("actions");
+  const error = document.getElementById("error");
+  const msg = document.getElementById("msg");
+  const CELL = 6;   // size of one module in pixels
+  const MARGIN = 24; // white border in pixels
   // Encode as UTF-8 so Japanese and other non-ASCII text works correctly
   qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
 
+  function show(state) {
+    canvas.hidden = actions.hidden = state !== "qr";
+    error.hidden = state !== "error";
+    msg.textContent = "";
+  }
+
+  function draw(qr) {
+    const count = qr.getModuleCount();
+    const size = count * CELL + MARGIN * 2;
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = "#000";
+    for (let r = 0; r < count; r++) {
+      for (let c = 0; c < count; c++) {
+        if (qr.isDark(r, c)) ctx.fillRect(MARGIN + c * CELL, MARGIN + r * CELL, CELL, CELL);
+      }
+    }
+  }
+
   input.addEventListener("input", () => {
     const text = input.value;
-    box.innerHTML = "";
-    if (!text) return;
+    if (!text) return show("none");
     try {
       const qr = qrcode(0, "M"); // 0 = pick the size automatically based on text length
       qr.addData(text, "Byte");
       qr.make();
-      box.innerHTML = qr.createSvgTag(6, 24); // cell size, margin
+      draw(qr);
+      show("qr");
     } catch (e) {
-      box.textContent = "Text is too long to fit in a QR code";
+      show("error");
     }
+  });
+
+  document.getElementById("copy").addEventListener("click", async () => {
+    try {
+      const blob = new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      msg.textContent = "Copied!";
+    } catch (e) {
+      msg.textContent = "Copy failed. Try Download instead.";
+    }
+  });
+
+  document.getElementById("download").addEventListener("click", () => {
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = "qrcode.png";
+    a.click();
+    msg.textContent = "";
   });
 </script>
 </body>
