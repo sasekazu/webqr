@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QRコード生成</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+</head>
+<body>
+  <h1>QRコード生成</h1>
+  <textarea id="input" rows="4" cols="50" placeholder="文字列やURLを入力してください" autofocus></textarea>
+  <div id="qr"></div>
+
+<script>
+  const input = document.getElementById("input");
+  const box = document.getElementById("qr");
+  // 日本語などを正しく扱うため UTF-8 でエンコードする
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
+
+  input.addEventListener("input", () => {
+    const text = input.value;
+    box.innerHTML = "";
+    if (!text) return;
+    try {
+      const qr = qrcode(0, "M"); // 0 = 文字数に合わせてサイズを自動選択
+      qr.addData(text, "Byte");
+      qr.make();
+      box.innerHTML = qr.createSvgTag(6, 24); // セルの大きさ, 余白
+    } catch (e) {
+      box.textContent = "文字列が長すぎてQRコードにできません";
+    }
+  });
+</script>
+</body>
+</html>
