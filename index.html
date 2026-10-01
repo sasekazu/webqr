@@ -27,8 +27,10 @@
   const actions = document.getElementById("actions");
   const error = document.getElementById("error");
   const msg = document.getElementById("msg");
-  const CELL = 6;   // size of one module in pixels
-  const MARGIN = 24; // white border in pixels
+  const CELL = 6;          // on-screen size of one module in pixels
+  const QUIET = 4;         // white border width in modules (QR spec recommends 4)
+  const EXPORT_SIZE = 1024; // approximate image size in pixels for copy/download
+  let current = null;      // the QR code currently shown
   // Encode as UTF-8 so Japanese and other non-ASCII text works correctly
   qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
 
@@ -38,19 +40,28 @@
     msg.textContent = "";
   }
 
-  function draw(qr) {
+  function draw(target, qr, cell) {
     const count = qr.getModuleCount();
-    const size = count * CELL + MARGIN * 2;
-    canvas.width = canvas.height = size;
-    const ctx = canvas.getContext("2d");
+    const margin = QUIET * cell;
+    const size = count * cell + margin * 2;
+    target.width = target.height = size;
+    const ctx = target.getContext("2d");
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, size, size);
     ctx.fillStyle = "#000";
     for (let r = 0; r < count; r++) {
       for (let c = 0; c < count; c++) {
-        if (qr.isDark(r, c)) ctx.fillRect(MARGIN + c * CELL, MARGIN + r * CELL, CELL, CELL);
+        if (qr.isDark(r, c)) ctx.fillRect(margin + c * cell, margin + r * cell, cell, cell);
       }
     }
+  }
+
+  // Render a high-resolution copy; whole-pixel modules keep the edges sharp
+  function exportCanvas() {
+    const cell = Math.ceil(EXPORT_SIZE / (current.getModuleCount() + QUIET * 2));
+    const big = document.createElement("canvas");
+    draw(big, current, cell);
+    return big;
   }
 
   input.addEventListener("input", () => {
@@ -60,7 +71,8 @@
       const qr = qrcode(0, "M"); // 0 = pick the size automatically based on text length
       qr.addData(text, "Byte");
       qr.make();
-      draw(qr);
+      current = qr;
+      draw(canvas, qr, CELL);
       show("qr");
     } catch (e) {
       show("error");
@@ -69,7 +81,8 @@
 
   document.getElementById("copy").addEventListener("click", async () => {
     try {
-      const blob = new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      const big = exportCanvas();
+      const blob = new Promise((resolve) => big.toBlob(resolve, "image/png"));
       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
       msg.textContent = "Copied!";
     } catch (e) {
@@ -79,7 +92,7 @@
 
   document.getElementById("download").addEventListener("click", () => {
     const a = document.createElement("a");
-    a.href = canvas.toDataURL("image/png");
+    a.href = exportCanvas().toDataURL("image/png");
     a.download = "qrcode.png";
     a.click();
     msg.textContent = "";
